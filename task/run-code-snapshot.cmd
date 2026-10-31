@@ -19,4 +19,7 @@ set NODE=node
 :run
 cd /d "%USERPROFILE%\.dsh\whale-work\whale-backup-plugin"
 "%NODE%" task\code-snapshot.mjs >> "%LOG%" 2>&1
+
+REM push code to GitHub (private + 3 public repos)
+"%NODE%" task\push-github.mjs >> "%LOG%" 2>&1
 exit /b %ERRORLEVEL%
