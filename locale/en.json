@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Whale Backup",
+    "description": "Snapshots the whale's diary, persona and config into a local git repo once a day, so a bad experiment can always be undone."
+  }
+}

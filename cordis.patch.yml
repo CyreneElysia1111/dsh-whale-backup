@@ -1,0 +1,8 @@
+# whale-backup bundle patch
+#
+# Installs one host row: a daily snapshot of the whale's own files into a local
+# git repo. Everything it does is local — no network, no credentials, no writes
+# outside the repo dir and its own state file.
+- insert:
+    - id: whale-backup
+      name: '@local/whale-backup'

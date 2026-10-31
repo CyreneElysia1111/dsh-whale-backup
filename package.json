@@ -1,0 +1,30 @@
+{
+  "name": "@local/whale-backup",
+  "version": "1.0.0",
+  "description": "Every night, snapshot 三金的肥鱼's diary, persona and config into a local git repo — so a bad idea can always be undone.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json",
+    "README.md"
+  ],
+  "license": "MIT"
+}
