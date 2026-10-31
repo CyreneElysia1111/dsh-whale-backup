@@ -86,6 +86,7 @@ function walk(d, rel) {
   }
 }
 walk(dir, '')
+console.log('walk', files.length, 'docs:', files.filter(f => /README|LICENSE|gitignore/.test(f.rel)).map(f => f.rel).join(','))
 console.log('files', files.length)
 
 // 建 blobs（并发 5）
