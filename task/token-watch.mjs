@@ -124,9 +124,12 @@ function main() {
   const yesterday = state.date !== today()
   if (yesterday) {
     // 昨天收尾：把昨天的账留一行，今天从零开始
+    // 2026-11-01：顺手存一份「今天零点时的累计快照」——没有它就算不出「今天各分项烧了多少」，
+    //   只能拿到几个会话的历史累计值（我第一次估费用时就是这么错成 13 倍的）。
     state.yesterday = { date: state.date, tokens: state.dayTokens }
     state.date = today()
     state.dayTokens = 0
+    state.dayStart = JSON.parse(JSON.stringify(state.seen || {}))
   }
 
   let deltaTotal = 0

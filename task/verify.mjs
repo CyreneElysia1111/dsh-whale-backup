@@ -37,6 +37,19 @@ for (const entry of manifest.files) {
     continue
   }
 
+  // 2026-11-01：`whale-relay.json` 进库前会被脱敏（apiToken -> <local-only>），
+  // 所以「快照与现场不同」是设计如此，不是故障。比对前先对现场做同样的脱敏，
+  // 否则每次演练都会报一条假报警——假报警比没有报警更坏。
+  if (name === 'whale-relay.json') {
+    try {
+      const conf = JSON.parse(liveBuf.toString('utf8'))
+      for (const key of ['apiToken', 'token', 'accessToken']) {
+        if (conf[key]) conf[key] = '<local-only>'
+      }
+      liveBuf = Buffer.from(JSON.stringify(conf, null, 2), 'utf8')
+    } catch {}
+  }
+
   let backupBuf
   try {
     backupBuf = await readFile(backupPath)

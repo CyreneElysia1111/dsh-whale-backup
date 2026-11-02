@@ -23,4 +23,7 @@ if not defined NODE (
 )
 
 "%NODE%" "%~dp0backup-once.mjs" >> "%USERPROFILE%\.dsh\whale-backup-task.log" 2>&1
+
+REM push snapshot to GitHub (private repo)
+"%NODE%" "%~dp0push-github.mjs" --private >> "%USERPROFILE%\.dsh\whale-backup-task.log" 2>&1
 exit /b %ERRORLEVEL%
