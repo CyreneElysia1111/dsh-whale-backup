@@ -28,6 +28,13 @@ async function writeState(next) {
 
 const prev = await readState()
 
+// 2026-11-02：主人说「4:10 电脑不一定开着」。改成开机即补 + 每 6 小时一次，
+// 由 --if-due 把关：今天已经成功备份过就直接退出，一天最多真跑一次。
+if (process.argv.includes('--if-due') && prev.lastSuccessDay === dayKey(new Date()) && prev.lastResult === 'ok') {
+  console.log(`[${stamp}] skip: 今天（${prev.lastSuccessDay}）已经备份过（${prev.lastCommit || 'no change'}）`)
+  process.exit(0)
+}
+
 try {
   const result = await runBackup(cfg)
   const state = result.changed ? `committed ${result.commit}` : 'no change'

@@ -14,10 +14,11 @@
 
 import { execFile } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { copyFile, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import path from 'node:path'
+import { computeMeter } from './meter.mjs'
 
 const HOME = process.env.USERPROFILE || homedir()
 
@@ -744,6 +745,51 @@ export function apply(ctx, config) {
 
       return { ok: false, message: `不认识的 action：${action}` }
     },
+  }
+
+  // ── 用量面板：给客户端一个只读的 /whale-meter（今日 token + 峰谷 + 实时折价）──
+  // 峰谷与价目表都按官方页面现查（meter.mjs，6 小时缓存）；抓不到就标记 stale，不拿记忆里的数字乘。
+  try {
+    const web = typeof ctx.get === 'function' ? ctx.get('webServer') : null
+    if (web && typeof web.register === 'function') {
+      ctx.effect(
+        () =>
+          web.register({
+            kind: 'exact',
+            path: '/whale-meter',
+            handler: async (req, res) => {
+              const send = (code, body) => {
+                try {
+                  res.statusCode = code
+                  res.setHeader('content-type', 'application/json; charset=utf-8')
+                  res.setHeader('cache-control', 'no-store')
+                  res.end(JSON.stringify(body))
+                } catch {
+                  /* response may already be gone */
+                }
+              }
+              try {
+                const readJson = async (file) => {
+                  try {
+                    const raw = await readFile(file, 'utf8')
+                    return JSON.parse(raw.replace(/^\uFEFF/, ''))
+                  } catch {
+                    return null
+                  }
+                }
+                const watch = (await readJson(path.join(HOME, '.dsh', 'whale-token-watch.json'))) || {}
+                const settings = (await readJson(path.join(HOME, '.dsh', 'whale-token-watch.settings.json'))) || {}
+                send(200, await computeMeter(watch, settings))
+              } catch (err) {
+                send(200, { ok: false, error: String((err && err.message) || err) })
+              }
+            },
+          }),
+        'whale-backup.meter()',
+      )
+    }
+  } catch {
+    /* webServer 不可用就只是没有面板，不影响备份 */
   }
 
   // 可选依赖：拿不到 tools 服务就只跑定时备份，绝不因为没声明 inject 而崩掉整个插件

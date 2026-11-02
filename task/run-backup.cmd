@@ -1,5 +1,5 @@
 @echo off
-rem Windows 计划任务的入口。自己找 node：先看 DSH 自带运行时，再退回 PATH。
+rem Windows scheduled-task entry. Finds node itself: DSH runtime first, then PATH.
 setlocal enabledelayedexpansion
 set "NODE="
 
@@ -22,8 +22,21 @@ if not defined NODE (
   exit /b 1
 )
 
-"%NODE%" "%~dp0backup-once.mjs" >> "%USERPROFILE%\.dsh\whale-backup-task.log" 2>&1
+rem GitHub REST needs the system certificate store (schannel), otherwise fetch fails.
+set "NODE_OPTIONS=--use-system-ca"
 
-REM push snapshot to GitHub (private repo)
-"%NODE%" "%~dp0push-github.mjs" --private >> "%USERPROFILE%\.dsh\whale-backup-task.log" 2>&1
+set "LOGFILE=%USERPROFILE%\.dsh\whale-backup-task.log"
+set "OUT=%TEMP%\whale-backup-out.txt"
+
+rem --if-due: run only if today has no successful backup yet (at most once a day).
+"%NODE%" "%~dp0backup-once.mjs" --if-due > "%OUT%" 2>&1
+set "RC=%ERRORLEVEL%"
+type "%OUT%" >> "%LOGFILE%"
+if not "%RC%"=="0" exit /b %RC%
+
+findstr /C:"skip: " "%OUT%" >nul 2>&1
+if not errorlevel 1 exit /b 0
+
+rem Push the snapshot to GitHub (private repo). Only after a real backup run.
+"%NODE%" "%~dp0push-github.mjs" --private >> "%LOGFILE%" 2>&1
 exit /b %ERRORLEVEL%

@@ -129,17 +129,25 @@ function main() {
     state.yesterday = { date: state.date, tokens: state.dayTokens }
     state.date = today()
     state.dayTokens = 0
+    state.dayPart = { uncachedInput: 0, cacheRead: 0, output: 0, cacheWrite: 0 }
     state.dayStart = JSON.parse(JSON.stringify(state.seen || {}))
   }
 
   let deltaTotal = 0
   let changed = false
+  // 2026-11-02：顺手记「今天各分项烧了多少」——没有分类就报不出价，只能拿总数瞎乘（上次的坑）。
+  if (!state.dayPart) state.dayPart = { uncachedInput: 0, cacheRead: 0, output: 0, cacheWrite: 0 }
   for (const [name, cur] of current) {
     const prev = state.seen[name]
     const delta = prev ? Math.max(0, spendOf(cur, cfg) - spendOf(prev, cfg)) : spendOf(cur, cfg)
     if (delta > 0) {
       deltaTotal += delta
       changed = true
+    }
+    for (const key of ['uncachedInput', 'cacheRead', 'output', 'cacheWrite']) {
+      const before = prev ? Number(prev[key]) || 0 : 0
+      const added = Math.max(0, (Number(cur[key]) || 0) - before)
+      if (added > 0) state.dayPart[key] = (Number(state.dayPart[key]) || 0) + added
     }
     state.seen[name] = cur
   }
